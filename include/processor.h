@@ -17,6 +17,7 @@ class Processor {
     std::vector<float> Utilization();
     void UpdateData();
     void UpdateResult();
+    void PrintData();
 
    private:
     // By abstracting this action out of UpdateData(), CPU sampling structure is

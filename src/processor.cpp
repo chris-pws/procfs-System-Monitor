@@ -1,83 +1,107 @@
 #include "processor.h"
-#include "linux_parser.h"
 
 #include <sys/time.h>
 
 #include <ctime>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "linux_parser.h"
+
+namespace lp = LinuxParser;
+
 std::vector<float> Processor::Utilization() {
-    
     std::time_t now = std::time(nullptr);
 
-    if ((now - this->data_updated_ > DATA_DELTA) || (this->cpu_data_.empty()))
-    {
-    	UpdateData();
+    if ((now - this->data_updated_ > DATA_DELTA) || (this->cpu_data_.empty())) {
+        UpdateData();
     }
-    if ((now - this->result_updated_ > RESULT_DELTA) || (this->cpu_result_.empty()))
-    {
-    	UpdateResult();
+    if ((now - this->result_updated_ > RESULT_DELTA) ||
+        (this->cpu_result_.empty())) {
+        UpdateResult();
     }
 
     std::vector<float> cpu_result{0.0f};
     return cpu_result;
-    //return cpu_result_ // remove the above two lines and uncomment this when done
+    // return cpu_result_ // remove the above two lines and uncomment this when
+    // done
 }
 
 void Processor::UpdateData() {
-	std::string line;
-	std::string cpu = "0";
-	std::string user = "0";
-	std::string nice = "0";
-	std::string system = "0";
-	std::string idle = "0";
-	std::string irq = "0";
-	std::string soft_irq = "0";
-	std::string steal = "0";
-	std::string guest = "0";
-	std::string guest_nice = "0";
-	int state_value{0};
-	int count{2};
-	std::vector<int> cpu_state;
+    std::string line = "";
+    std::string line_elements = "";
+    int state_value{0};
+    int count{0};
+    std::vector<int> cpu_state;
+    int idle{0};
+    int non_idle{0};
+    std::time_t now;
 
-	std::ifstream filestream(LinuxParser::kProcDirectory + LinuxParser::kStatFilename);
-	if (filestream.is_open()) {
-			while (std::getline(filestream, line))
-			{
-				if (line.find(cpu) == std::string::npos) {
-					break;
-				}
+    std::ifstream fs(lp::kProcDirectory + lp::kStatFilename);
+    if (fs.is_open()) {
+        // Skip the first line (CPUn average).
+        std::getline(fs, line);
 
-				std::stringstream ss(line);
-				while ( ss >> state_value )
-				{
-					cpu_state.push_back(state_value);
-				}
+        while (std::getline(fs, line)) {
+            if (line.find("cpu") == std::string::npos) {
+                break;
+            }
+            line_elements = line.substr(5, line.back());
 
+            std::stringstream ss(line_elements);
+            while (ss >> state_value) {
+                cpu_state.push_back(state_value);
+            }
 
-			}
-	}
+            idle = cpu_state[lp::kIdle_] + cpu_state[lp::kIOwait_];
+            non_idle = cpu_state[lp::kUser_] + cpu_state[lp::kNice_] +
+                       cpu_state[lp::kSystem_] + cpu_state[lp::kIRQ_] +
+                       cpu_state[lp::kSoftIRQ_] + cpu_state[lp::kSteal_];
+
+            this->AddCpuSample(count, idle, non_idle);
+            cpu_state.clear();
+            count++;
+        }
+
+        fs.close();
+    }
+
+    now = std::time(nullptr);
+    this->data_updated_ = now;
 }
 
-void Processor::UpdateResult() {
+void Processor::UpdateResult() {}
 
+void Processor::AddCpuSample(int cpu_id, int idle, int non_idle) {
+    size_t count = cpu_id;
+    std::time_t now;
+    CpuNData data = {idle, non_idle};
+
+    if (count + 1 > cpu_data_.size()) {
+        // Since a vector for this CPUn doesn't exist, it has no data yet.
+        // So we need to first create a new CPUn vector, and prime its CpuNData
+        // vector.
+        std::vector<CpuNData> new_cpu{data};
+        this->cpu_data_.push_back(new_cpu);
+        this->cpu_data_[cpu_id].push_back(data);
+    } else {
+        this->cpu_data_[cpu_id].erase(this->cpu_data_[cpu_id].begin());
+        this->cpu_data_[cpu_id].push_back(data);
+    }
+
+    now = std::time(nullptr);
+    this->result_updated_ = now;
 }
 
-void Processor::AddCpuSample(int cpu_id, int idle, int non_idle){
-	size_t count = cpu_id++;
-	CpuNData data = { idle, non_idle };
-
-	if (count > cpu_data_.size())
+void Processor::PrintData() {
+	int count{0};
+	for ( std::vector<CpuNData> cpu : this->cpu_data_ )
 	{
-		// No data has been collected yet, since a vector for this CPUn doesn't exist
-		// So we need to first create a new CPUn vector, and add an additional CpuNData to it
-		std::vector<CpuNData> new_cpu{data};
-		cpu_data_.push_back(new_cpu);
-		cpu_data_[cpu_id].push_back(data);
+		std::cout << "CPU" << std::to_string(count) << " idle: " << std::to_string(cpu[1].idle) << 
+			" non_idle: " << std::to_string(cpu[1].non_idle) << "\n    prev_idle: " <<
+			std::to_string(cpu[0].idle) << " prev_non_idle: " << std::to_string(cpu[0].non_idle) << "\n";
+		count++;
 	}
-
-	cpu_data_[cpu_id].erase(cpu_data_[cpu_id].begin());
-	cpu_data_[cpu_id].push_back(data);
 }
