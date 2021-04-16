@@ -23,10 +23,7 @@ std::vector<float> Processor::Utilization() {
         UpdateResult();
     }
 
-    std::vector<float> cpu_result{0.0f};
-    return cpu_result;
-    // return cpu_result_ // remove the above two lines and uncomment this when
-    // done
+    return cpu_result_;
 }
 
 void Processor::UpdateData() {
@@ -72,7 +69,29 @@ void Processor::UpdateData() {
     this->data_updated_ = now;
 }
 
-void Processor::UpdateResult() {}
+void Processor::UpdateResult() {
+    float total{0.0f};
+    float total_prev{0.0f};
+    float totald{0.0f};
+    float idled{0.0f};
+    float cpu_usage_pct{0.0f};
+    std::vector<float> result;
+    std::time_t now;
+
+    for (std::vector<CpuNData> cpu : this->cpu_data_) {
+        total = cpu[1].idle + cpu[1].non_idle;
+        total_prev = cpu[0].idle + cpu[0].non_idle;
+        totald = total - total_prev;
+        idled = cpu[1].idle - cpu[0].idle;
+        cpu_usage_pct = (totald - idled) / totald;
+
+        result.push_back(cpu_usage_pct);
+    }
+
+    this->cpu_result_ = result;
+    now = std::time(nullptr);
+    this->result_updated_ = now;
+}
 
 void Processor::AddCpuSample(int cpu_id, int idle, int non_idle) {
     size_t count = cpu_id;
@@ -96,12 +115,14 @@ void Processor::AddCpuSample(int cpu_id, int idle, int non_idle) {
 }
 
 void Processor::PrintData() {
-	int count{0};
-	for ( std::vector<CpuNData> cpu : this->cpu_data_ )
-	{
-		std::cout << "CPU" << std::to_string(count) << " idle: " << std::to_string(cpu[1].idle) << 
-			" non_idle: " << std::to_string(cpu[1].non_idle) << "\n    prev_idle: " <<
-			std::to_string(cpu[0].idle) << " prev_non_idle: " << std::to_string(cpu[0].non_idle) << "\n";
-		count++;
-	}
+    int count{0};
+    for (std::vector<CpuNData> cpu : this->cpu_data_) {
+        std::cout << "CPU" << std::to_string(count)
+                  << " idle: " << std::to_string(cpu[1].idle)
+                  << " non_idle: " << std::to_string(cpu[1].non_idle)
+                  << "\n    prev_idle: " << std::to_string(cpu[0].idle)
+                  << " prev_non_idle: " << std::to_string(cpu[0].non_idle)
+                  << "\n";
+        count++;
+    }
 }

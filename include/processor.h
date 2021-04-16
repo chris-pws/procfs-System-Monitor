@@ -28,9 +28,8 @@ class Processor {
     std::vector<std::vector<CpuNData>> cpu_data_;
     // Each float in this vector represents the percentage of active CPU.
     std::vector<float> cpu_result_;
-    // Update the cpu_result_ every x seconds.
-    std::time_t data_updated_{0};
 
+    std::time_t data_updated_{0};
     std::time_t result_updated_{0};
 };
 
