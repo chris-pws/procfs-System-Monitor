@@ -9,7 +9,7 @@
 
 struct CpuNData {
     int idle;
-    int non_idle;
+    int active;
 };
 
 class Processor {
@@ -18,17 +18,18 @@ class Processor {
     void UpdateData();
     void UpdateResult();
     void PrintData();
+    int NumCpus();
 
    private:
     // By abstracting this action out of UpdateData(), CPU sampling structure is
     // easily changed later.
-    void AddCpuSample(int cpu_id, int idle, int non_idle);
+    void AddCpuSample(int cpu_id, int idle, int active);
 
     // Each vector represents CPU n, with a nested vector of CPU samples.
     std::vector<std::vector<CpuNData>> cpu_data_;
-    // Each float in this vector represents the percentage of active CPU.
+    // Each float represents the percentage of active time for CPU n.
     std::vector<float> cpu_result_;
-
+    // Timestamps supporting cached updates of data and results.
     std::time_t data_updated_{0};
     std::time_t result_updated_{0};
 };

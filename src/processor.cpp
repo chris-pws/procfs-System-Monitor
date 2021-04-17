@@ -33,14 +33,12 @@ void Processor::UpdateData() {
     int count{0};
     std::vector<int> cpu_state;
     int idle{0};
-    int non_idle{0};
+    int active{0};
     std::time_t now;
 
     std::ifstream fs(lp::kProcDirectory + lp::kStatFilename);
     if (fs.is_open()) {
-        // Skip the first line (CPUn average).
         std::getline(fs, line);
-
         while (std::getline(fs, line)) {
             if (line.find("cpu") == std::string::npos) {
                 break;
@@ -53,11 +51,11 @@ void Processor::UpdateData() {
             }
 
             idle = cpu_state[lp::kIdle_] + cpu_state[lp::kIOwait_];
-            non_idle = cpu_state[lp::kUser_] + cpu_state[lp::kNice_] +
-                       cpu_state[lp::kSystem_] + cpu_state[lp::kIRQ_] +
-                       cpu_state[lp::kSoftIRQ_] + cpu_state[lp::kSteal_];
+            active = cpu_state[lp::kUser_] + cpu_state[lp::kNice_] +
+                     cpu_state[lp::kSystem_] + cpu_state[lp::kIRQ_] +
+                     cpu_state[lp::kSoftIRQ_] + cpu_state[lp::kSteal_];
 
-            this->AddCpuSample(count, idle, non_idle);
+            this->AddCpuSample(count, idle, active);
             cpu_state.clear();
             count++;
         }
@@ -79,13 +77,16 @@ void Processor::UpdateResult() {
     std::time_t now;
 
     for (std::vector<CpuNData> cpu : this->cpu_data_) {
-        total = cpu[1].idle + cpu[1].non_idle;
-        total_prev = cpu[0].idle + cpu[0].non_idle;
+        total = cpu[1].idle + cpu[1].active;
+        total_prev = cpu[0].idle + cpu[0].active;
         totald = total - total_prev;
         idled = cpu[1].idle - cpu[0].idle;
         cpu_usage_pct = (totald - idled) / totald;
-
-        result.push_back(cpu_usage_pct);
+        if (cpu_usage_pct != cpu_usage_pct) {
+            result.push_back(0.0f);
+        } else {
+            result.push_back(cpu_usage_pct);
+        }
     }
 
     this->cpu_result_ = result;
@@ -93,10 +94,9 @@ void Processor::UpdateResult() {
     this->result_updated_ = now;
 }
 
-void Processor::AddCpuSample(int cpu_id, int idle, int non_idle) {
+void Processor::AddCpuSample(int cpu_id, int idle, int active) {
     size_t count = cpu_id;
-    std::time_t now;
-    CpuNData data = {idle, non_idle};
+    CpuNData data = {idle, active};
 
     if (count + 1 > cpu_data_.size()) {
         // Since a vector for this CPUn doesn't exist, it has no data yet.
@@ -109,9 +109,6 @@ void Processor::AddCpuSample(int cpu_id, int idle, int non_idle) {
         this->cpu_data_[cpu_id].erase(this->cpu_data_[cpu_id].begin());
         this->cpu_data_[cpu_id].push_back(data);
     }
-
-    now = std::time(nullptr);
-    this->result_updated_ = now;
 }
 
 void Processor::PrintData() {
@@ -119,10 +116,17 @@ void Processor::PrintData() {
     for (std::vector<CpuNData> cpu : this->cpu_data_) {
         std::cout << "CPU" << std::to_string(count)
                   << " idle: " << std::to_string(cpu[1].idle)
-                  << " non_idle: " << std::to_string(cpu[1].non_idle)
+                  << " active: " << std::to_string(cpu[1].active)
                   << "\n    prev_idle: " << std::to_string(cpu[0].idle)
-                  << " prev_non_idle: " << std::to_string(cpu[0].non_idle)
-                  << "\n";
+                  << " prev_active: " << std::to_string(cpu[0].active) << "\n";
         count++;
     }
+}
+
+int Processor::NumCpus() {
+    if (this->cpu_data_.size() == 0) {
+        this->UpdateData();
+    }
+
+    return this->cpu_data_.size();
 }
