@@ -52,8 +52,8 @@ void Processor::UpdateData() {
 
             idle = cpu_state[lp::kIdle_] + cpu_state[lp::kIOwait_];
             active = cpu_state[lp::kUser_] + cpu_state[lp::kNice_] +
-                     cpu_state[lp::kSystem_] + cpu_state[lp::kIRQ_] +
-                     cpu_state[lp::kSoftIRQ_] + cpu_state[lp::kSteal_];
+                       cpu_state[lp::kSystem_] + cpu_state[lp::kIRQ_] +
+                       cpu_state[lp::kSoftIRQ_] + cpu_state[lp::kSteal_];
 
             this->AddCpuSample(count, idle, active);
             cpu_state.clear();
@@ -82,11 +82,14 @@ void Processor::UpdateResult() {
         totald = total - total_prev;
         idled = cpu[1].idle - cpu[0].idle;
         cpu_usage_pct = (totald - idled) / totald;
-        if (cpu_usage_pct != cpu_usage_pct) {
-            result.push_back(0.0f);
-        } else {
-            result.push_back(cpu_usage_pct);
+        if (cpu_usage_pct != cpu_usage_pct)
+        {
+        	result.push_back(0.0f);
         }
+        else
+        {
+        	result.push_back(cpu_usage_pct);
+    	}
     }
 
     this->cpu_result_ = result;
@@ -118,15 +121,17 @@ void Processor::PrintData() {
                   << " idle: " << std::to_string(cpu[1].idle)
                   << " active: " << std::to_string(cpu[1].active)
                   << "\n    prev_idle: " << std::to_string(cpu[0].idle)
-                  << " prev_active: " << std::to_string(cpu[0].active) << "\n";
+                  << " prev_active: " << std::to_string(cpu[0].active)
+                  << "\n";
         count++;
     }
 }
 
 int Processor::NumCpus() {
-    if (this->cpu_data_.size() == 0) {
-        this->UpdateData();
-    }
 
-    return this->cpu_data_.size();
+	if (this->cpu_data_.size() == 0) {
+		this->UpdateData();
+	}
+
+	return this->cpu_data_.size();
 }
