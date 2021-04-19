@@ -83,9 +83,17 @@ void Processor::UpdateResult() {
         totald = total - total_prev;
         idled = cpu[lp::kPresent_].idle - cpu[lp::kPrev_].idle;
         cpu_usage_pct = (totald - idled) / totald;
+<<<<<<< HEAD
         if (std::isnan(cpu_usage_pct)) {
             result.push_back(0.0f);
         } else {
+            result.push_back(cpu_usage_pct);
+=======
+        if (cpu_usage_pct != cpu_usage_pct) {
+            result.push_back(0.0f);
+>>>>>>> 85717ba222f7be1b89bd82130ea694c1cb5f8172
+        }
+        else {
             result.push_back(cpu_usage_pct);
         }
     }
