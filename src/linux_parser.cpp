@@ -147,10 +147,10 @@ int LinuxParser::RunningProcesses() {
     int running_processes{0};
 
     std::ifstream fs(kProcDirectory + kStatFilename);
-    while(std::getline(fs, line)) {
+    while (std::getline(fs, line)) {
         if (line.find(key) != std::string::npos) {
             std::stringstream ss(line);
-            ss >> key >> running_processes; 
+            ss >> key >> running_processes;
         }
     }
     return running_processes;
