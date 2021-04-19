@@ -1,7 +1,7 @@
 # procfs-System-Monitor
 
-System Monitor
-Developed for the OOP course of the [Udacity C++ Nanodegree Program](https://www.udacity.com/course/c-plus-plus-nanodegree--nd213). 
+System Monitor<br />
+Developed from a provided codebase, this project meets the evaulation requirements for the object oriented programming course final project, as part of the [Udacity C++ Nanodegree Program](https://www.udacity.com/course/c-plus-plus-nanodegree--nd213). 
 
 ![System Monitor](images/monitor.png)
 
