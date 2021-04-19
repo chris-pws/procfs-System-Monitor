@@ -41,7 +41,10 @@ enum CPUState {
     kGuestNice_
 };
 
-enum CPUData { kPrev_ = 0, kPresent_ };
+enum CPUData { 
+    kPrev_ = 0, 
+    kPresent_ 
+};
 
 enum MemInfo {
     kMemTotal_ = 0,
