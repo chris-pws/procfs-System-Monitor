@@ -2,6 +2,7 @@
 
 #include <sys/time.h>
 
+#include <cmath>
 #include <ctime>
 #include <iostream>
 #include <sstream>
@@ -52,8 +53,8 @@ void Processor::UpdateData() {
 
             idle = cpu_state[lp::kIdle_] + cpu_state[lp::kIOwait_];
             active = cpu_state[lp::kUser_] + cpu_state[lp::kNice_] +
-                       cpu_state[lp::kSystem_] + cpu_state[lp::kIRQ_] +
-                       cpu_state[lp::kSoftIRQ_] + cpu_state[lp::kSteal_];
+                     cpu_state[lp::kSystem_] + cpu_state[lp::kIRQ_] +
+                     cpu_state[lp::kSoftIRQ_] + cpu_state[lp::kSteal_];
 
             this->AddCpuSample(count, idle, active);
             cpu_state.clear();
@@ -77,19 +78,16 @@ void Processor::UpdateResult() {
     std::time_t now;
 
     for (std::vector<CpuNData> cpu : this->cpu_data_) {
-        total = cpu[1].idle + cpu[1].active;
-        total_prev = cpu[0].idle + cpu[0].active;
+        total = cpu[lp::kPresent_].idle + cpu[lp::kPresent_].active;
+        total_prev = cpu[lp::kPrev_].idle + cpu[lp::kPrev_].active;
         totald = total - total_prev;
-        idled = cpu[1].idle - cpu[0].idle;
+        idled = cpu[lp::kPresent_].idle - cpu[lp::kPrev_].idle;
         cpu_usage_pct = (totald - idled) / totald;
-        if (cpu_usage_pct != cpu_usage_pct)
-        {
-        	result.push_back(0.0f);
+        if (std::isnan(cpu_usage_pct)) {
+            result.push_back(0.0f);
+        } else {
+            result.push_back(cpu_usage_pct);
         }
-        else
-        {
-        	result.push_back(cpu_usage_pct);
-    	}
     }
 
     this->cpu_result_ = result;
@@ -121,17 +119,15 @@ void Processor::PrintData() {
                   << " idle: " << std::to_string(cpu[1].idle)
                   << " active: " << std::to_string(cpu[1].active)
                   << "\n    prev_idle: " << std::to_string(cpu[0].idle)
-                  << " prev_active: " << std::to_string(cpu[0].active)
-                  << "\n";
+                  << " prev_active: " << std::to_string(cpu[0].active) << "\n";
         count++;
     }
 }
 
 int Processor::NumCpus() {
+    if (this->cpu_data_.size() == 0) {
+        this->UpdateData();
+    }
 
-	if (this->cpu_data_.size() == 0) {
-		this->UpdateData();
-	}
-
-	return this->cpu_data_.size();
+    return this->cpu_data_.size();
 }

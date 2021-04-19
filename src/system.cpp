@@ -7,8 +7,11 @@
 #include <string>
 #include <vector>
 
+#include "linux_parser.h"
 #include "process.h"
 #include "processor.h"
+
+namespace lp = LinuxParser;
 
 using std::set;
 using std::size_t;
@@ -20,20 +23,14 @@ Processor &System::Cpu() { return cpu_; }
 // TODO: Return a container composed of the system's processes
 vector<Process> &System::Processes() { return processes_; }
 
-// TODO: Return the system's kernel identifier (string)
-std::string System::Kernel() { return string(); }
+std::string System::Kernel() { return lp::Kernel(); }
 
-// TODO: Return the system's memory utilization
-float System::MemoryUtilization() { return 0.0; }
+float System::MemoryUtilization() { return lp::MemoryUtilization(); }
 
-// TODO: Return the operating system name
-std::string System::OperatingSystem() { return string(); }
+std::string System::OperatingSystem() { return lp::OperatingSystem(); }
 
-// TODO: Return the number of processes actively running on the system
-int System::RunningProcesses() { return 0; }
+int System::RunningProcesses() { return lp::RunningProcesses(); }
 
-// TODO: Return the total number of processes on the system
-int System::TotalProcesses() { return 0; }
+int System::TotalProcesses() { return lp::TotalProcesses(); }
 
-// TODO: Return the number of seconds since the system started running
-long int System::UpTime() { return 0; }
+long int System::UpTime() { return lp::UpTime(); }

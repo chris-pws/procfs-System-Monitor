@@ -3,6 +3,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include "format.h"

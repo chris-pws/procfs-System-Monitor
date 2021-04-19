@@ -12,6 +12,10 @@ string Format::ElapsedTime(long seconds) {
     long time_num = seconds;
     std::ldiv_t dv{};
 
+    dv = std::div(time_num, 86400l);
+    time_formatted = std::to_string(dv.quot) + " days, ";
+    time_num = dv.rem;
+
     for (int i = 0; i < 3; i++) {
         dv = std::div(time_num, time_denom[i]);
         if (dv.quot < 10) {
