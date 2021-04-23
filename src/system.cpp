@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <cstddef>
+#include <iostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -20,8 +21,15 @@ using std::vector;
 
 Processor &System::Cpu() { return cpu_; }
 
-// TODO: Return a container composed of the system's processes
-vector<Process> &System::Processes() { return processes_; }
+vector<Process> &System::Processes() {
+	if (this->processes_.size() == 0) {
+		for ( auto pid : lp::Pids() ) {
+			Process process_obj = Process(pid);
+			this->processes_.push_back(process_obj);
+		}
+	}
+	return this->processes_;
+}
 
 std::string System::Kernel() { return lp::Kernel(); }
 

@@ -16,12 +16,13 @@ namespace lp = LinuxParser;
 std::vector<float> Processor::Utilization() {
     std::time_t now = std::time(nullptr);
 
-    if ((now - this->data_updated_ > DATA_DELTA) || (this->cpu_data_.empty())) {
-        UpdateData();
+    if ((now - this->data_updated_ > DATA_DELTA) || 
+    	(this->cpu_data_.empty())) {
+        this->UpdateData();
     }
     if ((now - this->result_updated_ > RESULT_DELTA) ||
         (this->cpu_result_.empty())) {
-        UpdateResult();
+        this->UpdateResult();
     }
 
     return cpu_result_;
@@ -79,21 +80,13 @@ void Processor::UpdateResult() {
 
     for (std::vector<CpuNData> cpu : this->cpu_data_) {
         total = cpu[lp::kPresent_].idle + cpu[lp::kPresent_].active;
-        total_prev = cpu[lp::kPrev_].idle + cpu[lp::kPrev_].active;
+        total_prev = cpu[lp::kPast_].idle + cpu[lp::kPast_].active;
         totald = total - total_prev;
-        idled = cpu[lp::kPresent_].idle - cpu[lp::kPrev_].idle;
+        idled = cpu[lp::kPresent_].idle - cpu[lp::kPast_].idle;
         cpu_usage_pct = (totald - idled) / totald;
-<<<<<<< HEAD
         if (std::isnan(cpu_usage_pct)) {
             result.push_back(0.0f);
         } else {
-            result.push_back(cpu_usage_pct);
-=======
-        if (cpu_usage_pct != cpu_usage_pct) {
-            result.push_back(0.0f);
->>>>>>> 85717ba222f7be1b89bd82130ea694c1cb5f8172
-        }
-        else {
             result.push_back(cpu_usage_pct);
         }
     }
@@ -107,10 +100,9 @@ void Processor::AddCpuSample(int cpu_id, int idle, int active) {
     size_t count = cpu_id;
     CpuNData data = {idle, active};
 
+    // If vector for this CPUn doesn't yet exist, we need to first create 
+    // a new CPUn vector, and prime its CpuNData vector with two samples.
     if (count + 1 > cpu_data_.size()) {
-        // Since a vector for this CPUn doesn't exist, it has no data yet.
-        // So we need to first create a new CPUn vector, and prime its CpuNData
-        // vector.
         std::vector<CpuNData> new_cpu{data};
         this->cpu_data_.push_back(new_cpu);
         this->cpu_data_[cpu_id].push_back(data);

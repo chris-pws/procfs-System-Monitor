@@ -3,6 +3,7 @@
 #include <curses.h>
 
 #include <chrono>
+#include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -71,8 +72,9 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process> &processes,
     int const user_column{9};
     int const cpu_column{16};
     int const ram_column{26};
-    int const time_column{35};
-    int const command_column{46};
+    int const time_column{37};
+    int const command_column{56};
+
     wattron(window, COLOR_PAIR(2));
     mvwprintw(window, ++row, pid_column, "PID");
     mvwprintw(window, row, user_column, "USER");
@@ -81,17 +83,19 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process> &processes,
     mvwprintw(window, row, time_column, "TIME+");
     mvwprintw(window, row, command_column, "COMMAND");
     wattroff(window, COLOR_PAIR(2));
-    for (int i = 0; i < n; ++i) {
-        mvwprintw(window, ++row, pid_column,
-                  to_string(processes[i].Pid()).c_str());
-        mvwprintw(window, row, user_column, processes[i].User().c_str());
-        float cpu = processes[i].CpuUtilization() * 100;
-        mvwprintw(window, row, cpu_column, to_string(cpu).substr(0, 4).c_str());
+    for (int i = 130; i > 130 - 15; --i) {
+        mvwprintw(window, ++row, pid_column, 
+                to_string(processes[i].Pid()).c_str());
+        mvwprintw(window, row, user_column, 
+                processes[i].User().c_str());
+        float cpu = processes[i].CpuUtilization();
+        mvwprintw(window, row, cpu_column, 
+                to_string(cpu).substr(0, 4).c_str());
         mvwprintw(window, row, ram_column, processes[i].Ram().c_str());
-        mvwprintw(window, row, time_column,
-                  Format::ElapsedTime(processes[i].UpTime()).c_str());
-        mvwprintw(window, row, command_column,
-                  processes[i].Command().substr(0, window->_maxx - 46).c_str());
+        mvwprintw(window, row, time_column, 
+                Format::ElapsedTime(processes[i].UpTime()).c_str());
+        mvwprintw(window, row, command_column, 
+                processes[i].Command().c_str());
     }
 }
 
@@ -100,7 +104,6 @@ void NCursesDisplay::Display(System &system, int n) {
     noecho();       // do not print input values
     cbreak();       // terminate ncurses on ctrl + c
     start_color();  // enable color
-
     int x_max{getmaxx(stdscr)};
     WINDOW *system_window = newwin(8 + system.Cpu().NumCpus(), x_max - 1, 0, 0);
     WINDOW *process_window =

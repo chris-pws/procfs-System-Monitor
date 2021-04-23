@@ -21,10 +21,7 @@ class Processor {
     int NumCpus();
 
    private:
-    // By abstracting this action out of UpdateData(), CPU sampling structure is
-    // easily changed later.
     void AddCpuSample(int cpu_id, int idle, int active);
-
     // Each vector represents CPU n, with a nested vector of CPU samples.
     std::vector<std::vector<CpuNData>> cpu_data_;
     // Each float represents the percentage of active time for CPU n.
