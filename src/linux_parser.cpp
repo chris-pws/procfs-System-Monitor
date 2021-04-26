@@ -1,11 +1,9 @@
 #include "linux_parser.h"
 
-#include <dirent.h>
 #include <unistd.h>
 
 #include <cmath>
 #include <filesystem>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -18,6 +16,11 @@ using std::to_string;
 using std::tuple;
 using std::vector;
 
+/********* LinuxParser::OperatingSystem *******
+ *  Retrieves the host distribution name.
+ *  Inputs: None.
+ *  Outputs: A string containing the host OS name.
+ */
 string LinuxParser::OperatingSystem() {
     string line;
     string key;
@@ -42,6 +45,11 @@ string LinuxParser::OperatingSystem() {
     return value;
 }
 
+/********* LinuxParser::Kernel *******
+ *  Initializes a queue structure, preparing it for usage.
+ *  Inputs: None.
+ *  Outputs: Kernel version string.
+ */
 string LinuxParser::Kernel() {
     string os, kernel, version;
     string line;
@@ -55,6 +63,11 @@ string LinuxParser::Kernel() {
     return kernel;
 }
 
+/********* LinuxParser::Pids *******
+ *  Fetches a list of numeric IDs relating to currently running processes.
+ *  Inputs: None.
+ *  Outputs: A vector of integers as the system PIDs.
+ */
 vector<int> LinuxParser::Pids() {
     vector<int> pids;
     string stem;
@@ -68,6 +81,11 @@ vector<int> LinuxParser::Pids() {
     return pids;
 }
 
+/********* LinuxParser::MemoryUtilization *******
+ *  The current system RAM usage as a percentage of the total memory.
+ *  Inputs: None.
+ *  Outputs: A float representing system RAM usage.
+ */
 float LinuxParser::MemoryUtilization() {
     string line;
     int i{0};
@@ -89,7 +107,7 @@ float LinuxParser::MemoryUtilization() {
             mem_values.push_back(v);
             i++;
         }
-    fs.close();
+        fs.close();
     }
 
     mem_used = (mem_values[kMemTotal_] - mem_values[kMemFree_]);
@@ -102,6 +120,11 @@ float LinuxParser::MemoryUtilization() {
     }
 }
 
+/********* LinuxParser::UpTime *******
+ *  Seconds since the system started up.
+ *  Inputs: None.
+ *  Outputs: A long integer type of the system uptime in seconds.
+ */
 long LinuxParser::UpTime() {
     string line;
     long long result{0ll};
@@ -117,6 +140,11 @@ long LinuxParser::UpTime() {
     return result;
 }
 
+/********* LinuxParser::TotalJiffies *******
+ *  Provides the number of Jiffies (system ticks) since boot-up.
+ *  Inputs: None.
+ *  Outputs: Number of Jiffies since startup in a long integer.
+ */
 long LinuxParser::TotalJiffies() {
     string line;
     long token;
@@ -127,8 +155,7 @@ long LinuxParser::TotalJiffies() {
         std::getline(fs, line);
         line = line.substr(5, line.back());
         std::stringstream ss(line);
-        while (ss >> token)
-        {
+        while (ss >> token) {
             result += token;
         }
         fs.close();
@@ -137,6 +164,11 @@ long LinuxParser::TotalJiffies() {
     return result;
 }
 
+/********* LinuxParser::TotalProcesses *******
+ *  Number of processes running.
+ *  Inputs: None.
+ *  Outputs: Integer of the number of processes.
+ */
 int LinuxParser::TotalProcesses() {
     int total_processes{0};
     string stem;
@@ -150,6 +182,11 @@ int LinuxParser::TotalProcesses() {
     return total_processes;
 }
 
+/********* LinuxParser::RunningProcesses *******
+ *  Number of active processes.
+ *  Inputs: None.
+ *  Outputs: Integer counting active processes.
+ */
 int LinuxParser::RunningProcesses() {
     string line;
     string key = "procs_running";
@@ -168,10 +205,17 @@ int LinuxParser::RunningProcesses() {
     return running_processes;
 }
 
-// Returns: a vector containing CPU usage information for a process ID.
-vector<long> LinuxParser::PidStat(int pid) { 
+/********* LinuxParser::PidStat *******
+ *  Returns relevant values from a procfs process stat file.
+ *  Inputs: An int representing a process ID.
+ *  Outputs: A vector of long integers of utime, stime, cutime, cstime, 
+ *           and starttime
+ */
+vector<long> LinuxParser::PidStat(int pid) {
     string line;
     std::size_t op, cp;
+    /*  
+    */  
     vector<int> token_pos{14, 15, 16, 17, 22};
     string token;
     vector<long> result(5, 0);
@@ -183,21 +227,24 @@ vector<long> LinuxParser::PidStat(int pid) {
         cp = line.find(")");
         line = line.replace(op + 1, cp - op - 1, "");
         result.clear();
-
         for (auto pos : token_pos) {
             token = LinuxParser::NthToken(line, pos);
-            if (!std::all_of(token.begin(), token.end(), isdigit))
-            {
+            if (!std::all_of(token.begin(), token.end(), isdigit)) {
                 token = "0";
             }
             result.push_back(stol(token));
         }
         fs.close();
     }
-    return result; 
+    return result;
 }
 
-string LinuxParser::Command(int pid) { 
+/********* LinuxParser::Command *******
+ *  Returns the invoking command for the provided process ID.
+ *  Inputs: Process ID int.
+ *  Outputs: A string containing the command that launched the provided PID.
+ */
+string LinuxParser::Command(int pid) {
     string line;
     std::size_t op, cp;
     string chop;
@@ -225,18 +272,23 @@ string LinuxParser::Command(int pid) {
     return command;
 }
 
-string LinuxParser::Ram(int pid) { 
+/********* LinuxParser::Ram *******
+ *  RAM usage information for a provided process ID.
+ *  Inputs: PID int.
+ *  Outputs: A string containing a value labeled in gigabytes, megabytes, or
+ *           kilobytes with a precision of 2 decimal places.
+ */
+string LinuxParser::Ram(int pid) {
     string line;
     string ram = "-------";
     string token = "";
     float value{0.0f};
-    vector<tuple<int,string>> units_in_kb{ { 1048576, "G" },
-            { 1024, "M" },
-            { 1, "K"} };
+    vector<tuple<float, string>> units_in_kb{
+        {1048576, "G"}, {1024, "M"}, {1, "K"}};
     string pretty_value;
-    
+
     std::ifstream fs(kProcDirectory + to_string(pid) + kStatusFilename);
-    if (fs.is_open()){
+    if (fs.is_open()) {
         for (int i = 0; i < 18; i++) {
             std::getline(fs, line);
         }
@@ -245,29 +297,36 @@ string LinuxParser::Ram(int pid) {
         fs.close();
     }
 
-    for ( auto unit : units_in_kb ) {
-        value = stoi(token);
-        value = value / std::get<0>(unit);
-        if ((int)value != 0 ) {
-            std::stringstream ss;
-            ss << std::fixed << std::setprecision(2) << value;
-            pretty_value  = ss.str();
-            ram = pretty_value + std::get<1>(unit);
-            break;
+    for (auto unit : units_in_kb) {
+        if (std::all_of(token.begin(), token.end(), isdigit) && token != "") {
+            value = stof(token);
+            value = value / std::get<0>(unit);
+            if ((int)value != 0) {
+                std::stringstream ss;
+                ss << std::fixed << std::setprecision(2) << value;
+                pretty_value = ss.str();
+                ram = pretty_value + std::get<1>(unit);
+                break;
+            }
         }
     }
     if (ram.size() < 7) {
         ram.insert(0, 7 - ram.size(), ' ');
     }
 
-    return ram; 
+    return ram;
 }
 
+/********* LinuxParser::Uid *******
+ *  Return the user ID of the provided process ID.
+ *  Inputs: Process ID integer.
+ *  Outputs: Integer of the UID that owns the referenced process.
+ */
 int LinuxParser::Uid(int pid) {
     int uid{0};
     string line;
     string value;
-    
+
     std::ifstream fs(kProcDirectory + to_string(pid) + kStatusFilename);
     if (fs.is_open()) {
         for (int i = 0; i < 9; i++) {
@@ -275,7 +334,7 @@ int LinuxParser::Uid(int pid) {
         }
         std::stringstream ss(line);
         ss >> value >> value;
-        if (std::all_of(value.begin(),value.end(), isdigit)) {
+        if (std::all_of(value.begin(), value.end(), isdigit)) {
             uid = stoi(value);
         }
         fs.close();
@@ -283,14 +342,19 @@ int LinuxParser::Uid(int pid) {
     return uid;
 }
 
-string LinuxParser::User(int uid) { 
+/********* LinuxParser::User *******
+ *  Translates a provided user ID integer into a readable username.
+ *  Inputs: Process ID int.
+ *  Outputs: A string of the username associated with the provided UID.
+ */
+string LinuxParser::User(int uid) {
     string name = "";
     string line;
     string user;
     string id;
-    
+
     std::ifstream fs(kPasswordPath);
-    if(fs.is_open()) {
+    if (fs.is_open()) {
         while (std::getline(fs, line)) {
             if (line.find(to_string(uid)) != std::string::npos) {
                 std::replace(line.begin(), line.end(), ':', ' ');
@@ -307,6 +371,11 @@ string LinuxParser::User(int uid) {
     return name;
 }
 
+/********* LinuxParser::StartTime *******
+ *  Time in seconds after system boot that a process was started.
+ *  Inputs: A process ID int.
+ *  Outputs: A long integer of a process start time in seconds after boot.
+ */
 long LinuxParser::StartTime(int pid) {
     int start{0};
     vector<long> pid_stat = LinuxParser::PidStat(pid);
@@ -317,8 +386,13 @@ long LinuxParser::StartTime(int pid) {
     return start;
 }
 
-string LinuxParser::NthToken(string line, int token_pos)
-{
+/********* LinuxParser::NthToken *******
+ *  Parses a line for the nth token.
+ *  Inputs: A string representing a space-delimited line, and an int of the nth
+ *          token to parse (count starts at 1).
+ *  Outputs: A string representing a single token.
+ */
+string LinuxParser::NthToken(string line, int token_pos) {
     string token = "";
     std::stringstream ss(line);
 
@@ -328,6 +402,11 @@ string LinuxParser::NthToken(string line, int token_pos)
     return token;
 }
 
+/********* LinuxParser::SysClk *******
+ *  Divisor for clock ticks to seconds.
+ *  Inputs: None.
+ *  Outputs: Number of clock ticks in a second.
+ */
 int LinuxParser::SysClk() {
     int clock_ticks{0};
     clock_ticks = sysconf(_SC_CLK_TCK);

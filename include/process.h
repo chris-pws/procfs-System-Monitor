@@ -5,26 +5,22 @@
 #include <string>
 #include <vector>
 
-/*
-Basic class for Process representation
-It contains relevant attributes as shown below
-*/
-
-// Interval for process CPU usage caching.
-const int kDataUpdateInterval = 1;
-
+/********* Process class *******
+ *  Initializes a queue structure, preparing it for usage.
+ */
 class Process {
    public:
-   	Process(int pid);
+    Process(int pid);
     int Pid();
-    std::string User();                  
-    std::string Command();       
-    float CpuUtilization();
-    std::string Ram();             
-    long UpTime();    
-    bool operator<(Process const &a) const;  // TODO: See src/process.cpp
-    void UpdateData();
-    void UpdateResult();
+    std::string User();
+    std::string Command();
+    float CpuUtilization() const;
+    std::string CpuPretty(int precision) const;
+    std::string Ram();
+    long UpTime();
+    bool operator<(Process const &that) const;
+    bool operator>(Process const &that) const;
+    void UpdateCpuData();
 
    private:
     int pid_{0};
@@ -33,15 +29,13 @@ class Process {
     long start_time_{0};
 
     void AddValue(int jiffy_type, long value);
-
     std::vector<std::vector<long>> cpu_data_ = {};
     float cpu_util_{0};
-    std::time_t data_updated_{0};
 };
 
-enum JiffyData {
-	kJiffiesSys_ = 0,
-	kJiffiesProc_
+enum JiffyData { 
+    kJiffiesSys_ = 0, 
+    kJiffiesProc_ 
 };
 
 #endif

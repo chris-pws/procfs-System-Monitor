@@ -11,6 +11,8 @@ void Display(System &system, int n);
 void DisplaySystem(System &system, WINDOW *window);
 void DisplayProcesses(std::vector<Process> &processes, WINDOW *window, int n);
 std::string ProgressBar(float percent);
+void ClearProcessWindow(WINDOW *window, int n);
+int CpuRowColor(int row);
 };  // namespace NCursesDisplay
 
 #endif

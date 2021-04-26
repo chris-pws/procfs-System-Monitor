@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace LinuxParser {
-// Paths
+
 const std::string kProcDirectory{"/proc/"};
 const std::string kCmdlineFilename{"/cmdline"};
 const std::string kCpuinfoFilename{"/cpuinfo"};
@@ -19,7 +19,6 @@ const std::string kVersionFilename{"/version"};
 const std::string kOSPath{"/etc/os-release"};
 const std::string kPasswordPath{"/etc/passwd"};
 
-// System
 float MemoryUtilization();
 long UpTime();
 std::vector<int> Pids();
@@ -28,7 +27,6 @@ int RunningProcesses();
 std::string OperatingSystem();
 std::string Kernel();
 
-// CPU
 enum CPUState {
     kUser_ = 0,
     kNice_,
@@ -52,15 +50,14 @@ enum MemInfo {
     kMemFree_,
 };
 
-enum PidStat {
-    kUTime_ = 0,
-    kSTime_,
-    kCUTime_,
-    kCSTime_,
-    kStartTime_
+enum PidStat { 
+    kUTime_ = 0, 
+    kSTime_, 
+    kCUTime_, 
+    kCSTime_, 
+    kStartTime_ 
 };
 
-// Processes
 std::string Command(int pid);
 std::vector<long> PidStat(int pid);
 std::string Ram(int pid);
@@ -69,8 +66,7 @@ int Uid(int pid);
 std::string User(int pid);
 long StartTime(int pid);
 
-// Utility
-std::string NthToken (std::string line, int token_pos);
+std::string NthToken(std::string line, int token_pos);
 int SysClk();
 };  // namespace LinuxParser
 
